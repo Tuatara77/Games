@@ -3,9 +3,10 @@ import random
 import time
 import colours
 
-screenwidth = 1600
-screenheight = 900
+screenwidth = 720
+screenheight = 1080
 
+rowcount = 13
 fps = 120
 
 class Sprite(pygame.sprite.Sprite):
@@ -52,10 +53,13 @@ class Ball(Sprite):
 	def move(self):
 		if self.rect.left <= -1:
 			self.velx *= -1
+			self.rect.left = 0
 		elif self.rect.right >= screenwidth:
 			self.velx *= -1
+			self.rect.right = screenwidth
 		elif self.rect.top <= -1:
 			self.vely *= -1
+			self.rect.top = 0
 		
 		if self.rect.bottom >= screenheight:
 			time.sleep(1)
@@ -82,7 +86,7 @@ boxg = pygame.sprite.Group()
 paddle = Paddle(screenwidth/2, screenheight-40)
 ball = Ball(screenwidth/2, screenheight/2)
 
-for g in range(48, 256, 16):
+for g in range(48, (rowcount+3)*16, 16):
 	for f in range(26,screenwidth,52):
 		Box(f,g)
 
