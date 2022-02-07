@@ -6,6 +6,7 @@ import colours
 screenwidth = 720
 screenheight = 1080
 
+ballvel = 6
 rowcount = 13
 fps = 120
 
@@ -31,25 +32,36 @@ class Paddle(Sprite):
 			self.rect.left = 0
 		elif self.rect.right >= screenwidth:
 			self.rect.right = screenwidth
+	
+	def collide(self):
+		powerupcollide = pygame.sprite.spritecollide(self, powerupg, True)
+		if powerupcollide:
+			for _ in range(3):
+				Ball(self.rect.centerx, self.rect.centery-20)
 
 
 class Ball(Sprite):
 	def __init__(self, x, y):
 		super().__init__(x,y,10,10,colours.white)
-		self.velx = random.randint(-5,5)
-		self.vely = random.choice([-5,5])
-		self.startx = x
-		self.starty = y
+		self.velx = random.randint(-ballvel, ballvel)
+		self.vely = -ballvel
 		
 		ballg.add(self)
 	
 	def hit(self):
 		paddlehit = pygame.sprite.spritecollide(self, paddleg, False)
-		boxhit = pygame.sprite.spritecollide(self,boxg, True)
-		if paddlehit or boxhit:
+		if paddlehit:
 			self.vely *= -1
-			self.velx = random.randint(-5,5)
-			
+			self.velx = random.randint(-ballvel, ballvel)
+		
+		boxhit = pygame.sprite.spritecollide(self,boxg, True)
+		if boxhit:
+			self.vely *= -1
+			self.velx = random.randint(-ballvel, ballvel)
+			chance = random.randint(1,4)
+			if chance == 1:
+					Powerup(self.rect.centerx, self.rect.centery)
+					
 	def move(self):
 		if self.rect.left <= -1:
 			self.velx *= -1
@@ -62,13 +74,19 @@ class Ball(Sprite):
 			self.rect.top = 0
 		
 		if self.rect.bottom >= screenheight:
-			time.sleep(1)
-			self.rect.centerx = self.startx
-			self.rect.centery = self.starty
+			self.kill()
 		
 		self.rect.x += self.velx
 		self.rect.y += self.vely
-		
+
+	
+class Powerup(Sprite):
+	def __init__(self,x,y):
+		super().__init__(x,y,15,15,colours.white)
+		powerupg.add(self)
+	
+	def move(self):
+		self.rect.y += 1
 
 class Box(Sprite):
 	def __init__(self, x, y):
@@ -82,6 +100,7 @@ screen = pygame.display.set_mode([screenwidth, screenheight])
 paddleg = pygame.sprite.Group()
 ballg = pygame.sprite.Group()
 boxg = pygame.sprite.Group()
+powerupg = pygame.sprite.Group()
 
 paddle = Paddle(screenwidth/2, screenheight-40)
 ball = Ball(screenwidth/2, screenheight/2)
@@ -105,14 +124,23 @@ while not done:
 	
 	if mousepos[0] != paddle.rect.centerx:
 		paddle.move(mousepos[0])
-		
-	ball.move()
-	ball.hit()
+	
+	for b in ballg:
+		b.move()
+		b.hit()
+	for p in powerupg:
+		p.move()
+	paddle.collide()
 	
 	screen.fill(colours.black)
 	boxg.draw(screen)
 	ballg.draw(screen)
+	powerupg.draw(screen)
 	paddleg.draw(screen)
+	
+	if len(ballg) == 0:
+		done = True
+		time.sleep(0.5)
 	
 	pygame.display.flip()
 pygame.quit()
